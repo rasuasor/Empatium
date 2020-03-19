@@ -36,6 +36,10 @@ var pc;
 var remote_pc;
 
 
+
+//var stream = null;
+
+
 // PeerConnection ICE protocol configuration (either Firefox or Chrome)
 // var pc_config = webrtcDetectedBrowser === 'firefox' ?
 //  {'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP address
@@ -63,14 +67,14 @@ var remote_pc;
  // Let's get started: prompt user for input (room name)
  var room = prompt('Enter room name:');
  // Connect to signaling server
- var socket = io.connect("http://localhost:8181");
+ var socket = io.connect("http://192.168.1.35:8181");
  // Send 'Create or join' message to singnaling server
  if (room !== '') {
   console.log('Create or join room', room);
   socket.emit('create or join', room);
  }
  // Set getUserMedia constraints
- var constraints = {video: true, audio: true};
+ var constraints = {video: {width: {exact: 640}, height: {exact: 480}}, audio:{echoCancellation: true, noiseSuppression: true}};
  // From this point on, execution proceeds based on asynchronous events...
  // getUserMedia() handlers...
  function handleUserMedia(stream) {
@@ -85,7 +89,13 @@ var remote_pc;
  }
  
  
- 
+async function getMedia()
+{
+    localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    localVideo.srcObject = localStream;
+    console.log('Adding local stream.');
+    sendMessage('got user media');
+}
  
  
  // Server-mediated message exchanging...
@@ -95,8 +105,14 @@ var remote_pc;
  socket.on('created', function (room){
   console.log('Created room ' + room);
   isInitiator = true;
+  getMedia();
   // Call getUserMedia()
-  navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+  //navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+//   async
+//   {
+//       localStream = await navigator.mediaDevices.getUserMedia(constraints);
+//       localVideo.srcObject = localStream;
+//   }
   console.log('Getting user media with constraints', constraints);
   checkAndStart();
  });
@@ -130,7 +146,10 @@ var remote_pc;
         console.log('This peer has joined room ' + room);
         isChannelReady = true;
         // Call getUserMedia()
-        navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+        //navigator.getUserMedia(constraints, handleUserMedia, handleUserMediaError);
+        //localStream = navigator.mediaDevices.getUserMedia(constraints);
+        //localVideo.srcObject = localStream;
+        getMedia();
         console.log('Getting user media with constraints', constraints);
        });
        
