@@ -34,8 +34,9 @@ var remoteStream;
 // PeerConnection
 var pc;
 var remote_pc;
+//var config;
 
-
+import {config} from './Config.js'
 
 //var stream = null;
 
@@ -45,16 +46,7 @@ var remote_pc;
 //  {'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP address
 //  {'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]};
 
- var pc_config = {'iceServers': [{'url': 'stun:stun.l.google.com:19302'},
-     {'url':'stun:stun1.l.google.com:19302'},
-     {'url':'stun:stun2.l.google.com:19302'},
-     {'url':'stun:stun3.l.google.com:19302'},
-     {'url':'stun:stun4.l.google.com:19302'},
-     {
-         url: 'turn:numb.viagenie.ca',
-         credential: 'muazkh',
-         username: 'webrtc@live.com'
-     }]};
+ var pc_config = config.iceServers;
 
 //var pc_config = {'iceServers':[]};
 
@@ -67,14 +59,14 @@ var remote_pc;
  // Let's get started: prompt user for input (room name)
  var room = prompt('Enter room name:');
  // Connect to signaling server
- var socket = io.connect("http://192.168.1.35:8181");
+ var socket = io.connect(config.ServerIP);
  // Send 'Create or join' message to singnaling server
  if (room !== '') {
   console.log('Create or join room', room);
   socket.emit('create or join', room);
  }
  // Set getUserMedia constraints
- var constraints = {video: {width: {exact: 640}, height: {exact: 480}}, audio:{echoCancellation: true, noiseSuppression: true}};
+ var constraints = {video: {width: {exact: 640}, height: {exact: 480}}, audio: true};
  // From this point on, execution proceeds based on asynchronous events...
  // getUserMedia() handlers...
  function handleUserMedia(stream) {
@@ -135,6 +127,7 @@ async function getMedia()
         console.log('Another peer made a request to join room ' + room);
         console.log('This peer is the initiator of room ' + room + '!');
         isChannelReady = true;
+        isInitiator = true;
        });
        
        
@@ -222,7 +215,22 @@ function sendMessage(message){
     try {
     //pc = new RTCPeerConnection(pc_config, pc_constraints);
     pc = new RTCPeerConnection(pc_config);
-    pc.addStream(localStream);
+    
+
+    const videoTracks = localStream.getVideoTracks();
+    const audioTracks = localStream.getAudioTracks();
+    console.log('Checking devices');
+    if (videoTracks.length > 0) {
+      console.log(`Using video device: ${videoTracks[0].label}`);
+    }
+    if (audioTracks.length > 0) {
+      console.log(`Using audio device: ${audioTracks[0].label}`);
+    }
+
+    
+    
+    
+    
     pc.onicecandidate = handleIceCandidate;
     // console.log('Created RTCPeerConnnection with:\n' +
     // ' config: \'' + JSON.stringify(pc_config) + '\';\n' +
@@ -234,8 +242,15 @@ function sendMessage(message){
     alert('Cannot create RTCPeerConnection object.');
     return;
     }
-    pc.onaddstream = handleRemoteStreamAdded;
+    pc.ontrack = handleRemoteStreamAdded;
     pc.onremovestream = handleRemoteStreamRemoved;
+
+
+    //pc.addStream(localStream);
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream))
+
+
+
     /*if (isInitiator) {
     try {
     // Create a reliable data channel
@@ -346,10 +361,15 @@ function handleReceiveChannelStateChange() {
    function handleRemoteStreamAdded(event) {
     console.log('Remote stream added.');
     //attachMediaStream(remoteVideo, event.stream);
-    remoteVideo.srcObject = event.stream;
-    console.log('Remote stream attached!!.');
-    remoteStream = event.stream;
+    if (remoteVideo.srcObject !== event.streams[0])
+    {
+        remoteVideo.srcObject=event.streams[0];
+        console.log('Remote stream attached!!.');
+    }
+    
+    //remoteStream = event.stream;
    }
+   
    function handleRemoteStreamRemoved(event) {
     console.log('Remote stream removed. Event: ', event);
    }

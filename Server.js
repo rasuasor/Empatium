@@ -5,8 +5,8 @@ var file = new(static.Server)();
 // We use the http module’s createServer function and
 // rely on our instance of node-static to serve the files
 var app = http.createServer(function (req, res) {
- file.serve(req, res);
- res.setHeader("Feature-Policy", "camera 'self'; microphone 'self'");
+   file.serve(req, res);
+   //res.setHeader("Feature-Policy", "camera 'self'; microphone 'self'");
 }).listen(8181);
 // Use socket.io JavaScript library for real-time web applications
 var io = require('socket.io').listen(app);
