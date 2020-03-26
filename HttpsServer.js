@@ -1,11 +1,18 @@
 var static = require('node-static');
-var http = require('http');
+var https = require('https');
+const fs = require('fs');
 const config = require('./Config.js');
+
+const options = {
+    key: fs.readFileSync(config.HttpsOptions.key),
+    cert: fs.readFileSync(config.HttpsOptions.cert)
+}
+
 // Create a node-static server instance
 var file = new(static.Server)();
-// We use the http module’s createServer function and
+// We use the https module’s createServer function and
 // rely on our instance of node-static to serve the files
-var app = http.createServer(function (req, res) {
+var app = https.createServer(options, function (req, res) {
    file.serve(req, res);
    //res.setHeader("Feature-Policy", "camera 'self'; microphone 'self'");
 }).listen(config.ServerPort);

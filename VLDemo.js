@@ -36,8 +36,6 @@ var pc;
 var remote_pc;
 //var config;
 
-import {config} from './Config.js'
-
 //var stream = null;
 
 
@@ -244,7 +242,7 @@ function sendMessage(message){
     }
     pc.ontrack = handleRemoteStreamAdded;
     pc.onremovestream = handleRemoteStreamRemoved;
-
+    pc.onconnectionstatechange = handleStateChanged;
 
     //pc.addStream(localStream);
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream))
@@ -369,6 +367,11 @@ function handleReceiveChannelStateChange() {
     
     //remoteStream = event.stream;
    }
+
+   function handleStateChanged(event){
+       console.log('State changed: ', pc.connectionState)
+   }
+
    
    function handleRemoteStreamRemoved(event) {
     console.log('Remote stream removed. Event: ', event);
