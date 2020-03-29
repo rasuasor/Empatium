@@ -44,7 +44,9 @@ var remote_pc;
 //  {'iceServers':[{'url':'stun:23.21.150.121'}]} : // IP address
 //  {'iceServers': [{'url': 'stun:stun.l.google.com:19302'}]};
 
- var pc_config = config.iceServers;
+ var pc_config = {};
+
+ pc_config.iceServers = config.iceServers;
 
 //var pc_config = {'iceServers':[]};
 
