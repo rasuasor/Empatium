@@ -11,6 +11,12 @@ navigator.getUserMedia = navigator.getUserMedia ||
 window.onbeforeunload = function(e){
  hangup();
 }
+
+function get(name){
+   if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+      return decodeURIComponent(name[1]);
+}
+
 // Data channel information
 var sendChannel, receiveChannel;
 var sendButton = document.getElementById("sendButton");
@@ -57,7 +63,7 @@ var remote_pc;
  ]};*/
  var sdpConstraints = {};
  // Let's get started: prompt user for input (room name)
- var room = prompt('Enter room name:');
+ var room = get('id');
  // Connect to signaling server
  var socket = io.connect(config.ServerIP);
  // Send 'Create or join' message to singnaling server
