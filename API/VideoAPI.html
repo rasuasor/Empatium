@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Very simple WebRTC application with a Node.js signaling server</title>
+</head>
+<body>
+<div id='mainDiv'>
+ <table border="1" width="100%">
+ <tr>
+ <th>
+ Local video
+ </th>
+ <th>
+ Remote video
+</th>
+</tr>
+<tr>
+<td>
+<video id="localVideo" playsinline autoplay muted></video>
+</td>
+<td>
+<video id="remoteVideo" width="640" height="480" playsinline autoplay></video>
+</td>
+</tr>
+<tr>
+<td align="center">
+    <button onclick="Session.ChangeAudioState()">Change Audio State</button>
+</td>
+<td align="center">
+    <button onclick="Session.ChangeVideoState()">Change Video State</button>
+</td>
+<td></td>
+</tr>
+<tr>
+    <td align="center">
+        <button onclick="Session.Call(get('id'))">Call</button>
+    </td>
+    <td align="center">
+        <button onclick="Session.Hangup()">Hangup</button>
+    </td>
+</tr>
+</table>
+</div>
+<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script> -->
+    <script src="socket.io.js"></script>
+    <script src='adapter.js'></script>
+    <script src='Config.js'></script>
+    <script src='VideoAPI.js'></script>
+    <script>
+    function get(name){
+        if(name=(new RegExp('[?&]'+encodeURIComponent(name)+'=([^&]*)')).exec(location.search))
+        return decodeURIComponent(name[1]);
+    }
+    window.onbeforeunload = function(e){
+        Session.Hangup();
+    }</script>
+</body>
+</html>
