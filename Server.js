@@ -1,79 +1,75 @@
-var static = require('node-static');
-var http = require('http');
-const config = require('./Config.js');
+const nodeStatic = require('node-static');
+const http = require('http');
+let config = require('./Config.js');
 // Create a node-static server instance
-var file = new(static.Server)();
+let file = new (nodeStatic.Server)();
 // We use the http module’s createServer function and
 // rely on our instance of node-static to serve the files
-var app = http.createServer(function (req, res) {
-   file.serve(req, res);
-   //res.setHeader("Feature-Policy", "camera 'self'; microphone 'self'");
+let app = http.createServer(function (req, res) {
+    file.serve(req, res);
+    //res.setHeader("Feature-Policy", "camera 'self'; microphone 'self'");
 }).listen(config.ServerPort);
 // Use socket.io JavaScript library for real-time web applications
-var io = require('socket.io').listen(app);
+let io = require('socket.io').listen(app);
 
 
 // Let's start managing connections...
-io.sockets.on('connection', function (socket){
+io.sockets.on('connection', function (socket) {
+
+    function log() {
+        let array = [">>> "];
+        for (let i = 0, iMax = arguments.length; i < iMax; i++) {
+            array.push(arguments[i]);
+        }
+        socket.emit('log', array);
+    }
+
+    // Handle 'message' messages
+    socket.on('message', function (message, room) {
+        log('S --> got message: ', message);
+        //log('S --> message.chanel: ', room);
+        // channel-only broadcast...
+        socket.broadcast.to(room).emit('message', message);
+        //io.to(room).emit('message', message);
+    });
 
 
-// Handle 'message' messages
- socket.on('message', function (message, room) {
- log('S --> got message: ', message);
- //log('S --> message.chanel: ', room);
- // channel-only broadcast...
- socket.broadcast.to(room).emit('message', message);
- //io.to(room).emit('message', message);
-});
+    // Handle 'create or join' messages
+    socket.on('create or join', function (room) {
 
-
-// Handle 'create or join' messages
-socket.on('create or join', function (room) {
-
-var numClients;
+        let numClients;
 
 //var numClients = io.of('/').in(room).clients.length;
 
 
+        let clients = io.nsps["/"].adapter.rooms[room];
 
-var clients = io.nsps["/"].adapter.rooms[room];
+        if (clients !== null && clients !== undefined) {
+            numClients = clients.length;
+            log("S --> adapter.rooms: " + clients.length);
+        } else {
+            numClients = 0;
+        }
 
-if (clients != null && clients != undefined)
-{
-    numClients = clients.length;
-    log("S --> adapter.rooms: " + clients.length);
-}
-else
-{
-    numClients = 0; 
-}
+        //log('S --> clients:' + io.of('/').in(room).clients.toString)
 
-//log('S --> clients:' + io.of('/').in(room).clients.toString)
+        // io.of("/").in(room).clients((error, clients)=>{
+        //     numClients = clients.length;
+        //     log("S --> numClients: " + numClients)});
 
-// io.of("/").in(room).clients((error, clients)=>{
-//     numClients = clients.length;
-//     log("S --> numClients: " + numClients)});
+        log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
+        log('S --> Request to create or join room', room);
 
-log('S --> Room ' + room + ' has ' + numClients + ' client(s)');
-log('S --> Request to create or join room', room);
-// First client joining...
-if (numClients == 0){
-socket.join(room);
-socket.emit('created', room);
-} else if (numClients == 1) {
-// Second client joining...
-io.sockets.in(room).emit('join', room);
-socket.join(room);
-socket.emit('joined', room);
-} else { // max two clients
-socket.emit('full', room);
-}
-});
-function log(){
-var array = [">>> "];
-for (var i = 0; i < arguments.length; i++) {
-array.push(arguments[i]);
-}
-socket.emit('log', array);
-}
+        // First client joining...
+        if (numClients === 0) {
+            socket.join(room);
+            socket.emit('created', room);
+        } else if (numClients === 1) { // Second client joining...
+            io.sockets.in(room).emit('join', room);
+            socket.join(room);
+            socket.emit('joined', room);
+        } else { // max two clients
+            socket.emit('full', room);
+        }
+    });
 });
